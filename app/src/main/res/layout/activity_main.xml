@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".ui.main.MainActivity">
+    
+    <data>
+        
+        <import type="android.view.View" />
+        
+        <variable
+            name="navigator"
+            type="com.naemo.dismap.ui.main.MainNavigator" />
+
+        <variable
+            name="viewModel"
+            type="com.naemo.dismap.ui.main.MainViewModel" />
+    </data>
+
+
+    <LinearLayout
+        android:id="@+id/main_frame"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+
+        <EditText
+            android:editable="false"
+            android:clickable="false"
+            android:id="@+id/my_distance"
+            android:layout_width="290dp"
+            android:layout_height="61dp"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:layout_marginTop="40dp"
+            android:textColor="@color/colorWhite"
+            android:background="@color/colorHint"
+            android:text="@={viewModel.distance}"
+             />
+
+        <Button
+            android:layout_marginTop="400dp"
+            android:id="@+id/button_main"
+            android:layout_width="211dp"
+            android:layout_height="71dp"
+            android:layout_gravity="center"
+            android:elevation="5dp"
+            android:onClick="@{(view) -> navigator.fetchLocation()}"
+            android:text="@string/start" />
+
+
+    </LinearLayout>
+</layout>
