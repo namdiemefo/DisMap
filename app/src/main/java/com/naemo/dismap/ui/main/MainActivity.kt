@@ -1,6 +1,7 @@
 package com.naemo.dismap.ui.main
 
 import android.Manifest
+import android.app.ProgressDialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -10,8 +11,10 @@ import android.os.Bundle
 import android.os.Looper
 import android.provider.Settings
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ProgressBar
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.Observer
 import com.google.android.gms.location.*
@@ -25,6 +28,7 @@ import com.naemo.dismap.db.stop.StopLocation
 import com.naemo.dismap.ui.base.BaseActivity
 import com.naemo.dismap.utils.AppUtils
 import kotlinx.android.synthetic.main.activity_main.*
+import java.util.*
 import javax.inject.Inject
 
 class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>(), MainNavigator {
@@ -44,6 +48,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>(), MainNav
     lateinit var mFusedLocationClient: FusedLocationProviderClient
     lateinit var button: Button
     lateinit var field: EditText
+    lateinit var progressBar: ProgressBar
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,6 +58,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>(), MainNav
     private fun initViews() {
         button = mBinder?.buttonMain!!
         field = mBinder?.myDistance!!
+        progressBar = mBinder?.progress!!
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
     }
 
@@ -87,7 +93,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>(), MainNav
     }
 
     private fun getStartLocation() {
-        getViewModel()?.textCalculating()
+        progressBar.visibility = View.VISIBLE
         if (checkPermissions()) {
             if (isLocationEnabled()) {
                 mFusedLocationClient.lastLocation.addOnCompleteListener(this) { task ->
@@ -112,6 +118,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>(), MainNav
     }
 
     private fun getStopLocation() {
+        progressBar.visibility = View.GONE
         if (checkPermissions()) {
             if (isLocationEnabled()) {
                 mFusedLocationClient.lastLocation.addOnCompleteListener(this) { task ->
