@@ -1,10 +1,8 @@
 package com.naemo.dismap.ui.main
 
 import android.app.Application
-import android.location.Location
 import android.util.Log
 import androidx.databinding.ObservableField
-import androidx.lifecycle.LiveData
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
 import com.naemo.dismap.R
@@ -15,9 +13,7 @@ import com.naemo.dismap.db.stop.StopLocation
 import com.naemo.dismap.ui.base.BaseViewModel
 import dagger.Module
 import dagger.Provides
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlin.coroutines.CoroutineContext
+
 
 class MainViewModel(application: Application) : BaseViewModel<MainNavigator>(application){
 
@@ -27,10 +23,6 @@ class MainViewModel(application: Application) : BaseViewModel<MainNavigator>(app
 
     fun textCalculating() {
         distance.set("Calculating distance ....")
-    }
-
-    fun endText() {
-        distance.set("hello")
     }
 
     fun calcDistance(startLocation: StartLocation, stopLocation: StopLocation) {
@@ -43,9 +35,9 @@ class MainViewModel(application: Application) : BaseViewModel<MainNavigator>(app
 
         val myDistance = SphericalUtil.computeDistanceBetween(from, to)
         val results = FloatArray(10)
-        val ss = Location.distanceBetween(fromLat!!, fromLong!!, toLat!!, toLong!!, results)
-        val meters = myDistance.toString()
-        distance.set(results[0].toString()+"m")
+       // val ss = Location.distanceBetween(fromLat!!, fromLong!!, toLat!!, toLong!!, results)
+      //  val meters = myDistance.toString()
+        distance.set(myDistance.toString()+"m")
     }
 
     suspend fun getDb(): Db? {
