@@ -3,12 +3,6 @@ package com.naemo.dismap.db
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.LiveData
-import com.naemo.dismap.db.start.StartLocation
-import com.naemo.dismap.db.start.StartLocationDao
-import com.naemo.dismap.db.start.StartLocationDatabase
-import com.naemo.dismap.db.stop.StopLocation
-import com.naemo.dismap.db.stop.StopLocationDao
-import com.naemo.dismap.db.stop.StopLocationDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.IO
@@ -20,49 +14,87 @@ class LocationRepository(application: Application) : CoroutineScope {
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main
 
-    private var startLocationDao: StartLocationDao? = null
-    private var stopLocationDao: StopLocationDao? = null
+
+    private var dbDao: DbDao? = null
 
     init {
-        val startDatabase = StartLocationDatabase.invoke(application)
-        val stopDatabase = StopLocationDatabase.invoke(application)
-        startLocationDao = startDatabase.startLocationDao()
-        stopLocationDao = stopDatabase.stopLocationDao()
+        val dbDatabase = DbDatabase.invoke(application)
+        dbDao = dbDatabase.dbDao()
     }
 
-    fun retrieveStartLocation(): LiveData<StartLocation>? {
-        return startLocationDao?.loadStart()
+
+    suspend fun getDb(): Db? {
+        val db = getMyDb()
+        return db
     }
 
-    fun retrieveStopLocation(): LiveData<StopLocation>? {
-        return stopLocationDao?.loadStop()
+    private suspend fun getMyDb(): Db? {
+       return withContext(IO) {
+            dbDao?.loadDb()
+        }
     }
 
-    fun saveStartLocation(location: StartLocation) {
+    fun saveDb(db: Db) {
         launch {
-            saveStart(location)
+            save(db)
         }
     }
 
-    private suspend fun saveStart(location: StartLocation) {
-        Log.d("startLag", location.latitude.toString())
-        Log.d("startLog", location.longitude.toString())
-        withContext(IO){
-            startLocationDao?.saveStart(location)
+    private suspend fun save(db: Db) {
+        withContext(IO) {
+            Log.d("star11", db.id.toString())
+            Log.d("star12", db.stop_latitude.toString())
+            dbDao?.saveDb(db)
         }
     }
 
-    fun saveStopLocation(location: StopLocation) {
+    fun updateStartLongitude(startLongitude: Double?, id: Int) {
         launch {
-            saveStop(location)
+            updateStartLong(startLongitude, id)
         }
     }
 
-    private suspend fun saveStop(location: StopLocation) {
-        Log.d("stopLag", location.latitude.toString())
-        Log.d("stopLog", location.longitude.toString())
+    private suspend fun updateStartLong(startLongitude: Double?, id: Int) {
         withContext(IO){
-            stopLocationDao?.saveStop(location)
+            dbDao?.saveStartLong(startLongitude, id)
         }
     }
+
+    fun updateStartLatitude(startLatitude: Double?, id: Int) {
+        launch {
+            updateStartLat(startLatitude, id)
+        }
+    }
+
+    private suspend fun updateStartLat(startLatitude: Double?, id: Int) {
+        withContext(IO){
+            dbDao?.saveStartLat(startLatitude, id)
+        }
+    }
+
+    fun updateStopLongitude(stopLongitude: Double?, id: Int) {
+        launch {
+            updateStopLong(stopLongitude, id)
+        }
+    }
+
+    private suspend fun updateStopLong(stopLongitude: Double?, id: Int) {
+        withContext(IO){
+            dbDao?.saveStopLong(stopLongitude, id)
+        }
+    }
+
+    fun updateStopLatitude(stopLatitude: Double?, id: Int) {
+        launch {
+            updateStopLat(stopLatitude, id)
+        }
+    }
+
+    private suspend fun updateStopLat(stopLatitude: Double?, id: Int) {
+        Log.d("star23", stopLatitude.toString())
+        withContext(IO){
+            dbDao?.saveStopLat(stopLatitude, id)
+        }
+    }
+
 }

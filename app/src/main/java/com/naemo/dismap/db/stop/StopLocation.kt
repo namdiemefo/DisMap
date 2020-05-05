@@ -1,30 +1,29 @@
 package com.naemo.dismap.db.stop
 
-import android.content.Context
-import androidx.lifecycle.LiveData
-import androidx.room.*
 
-@Entity(tableName = "Stop_Location")
-class StopLocation(
-    val longitude: Double?,
-    val latitude: Double?
-) {
-    @PrimaryKey(autoGenerate = false)
-    var id = 0
-}
 
+data class StopLocation(
+    val latitude: Double?,
+    val longitude: Double?
+)
+
+
+/*
 @Dao
 interface StopLocationDao {
 
     @Query("SELECT * FROM Stop_Location")
     fun loadStop(): LiveData<StopLocation>
 
+    @Query("SELECT * FROM Stop_Location")
+    fun stop(): StopLocation
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun saveStop(location: StopLocation)
 
 }
 
-@Database(entities = [StopLocation::class], version = 2, exportSchema = false)
+@Database(entities = [StopLocation::class], version = 3, exportSchema = false)
 abstract class StopLocationDatabase : RoomDatabase() {
 
     abstract fun stopLocationDao(): StopLocationDao
@@ -50,3 +49,4 @@ abstract class StopLocationDatabase : RoomDatabase() {
     }
 
 }
+*/

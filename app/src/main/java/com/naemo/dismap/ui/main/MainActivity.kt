@@ -1,7 +1,6 @@
 package com.naemo.dismap.ui.main
 
 import android.Manifest
-import android.app.ProgressDialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -11,27 +10,29 @@ import android.os.Bundle
 import android.os.Looper
 import android.provider.Settings
 import android.util.Log
-import android.view.View
 import android.widget.Button
 import android.widget.EditText
-import android.widget.ProgressBar
 import androidx.core.app.ActivityCompat
-import androidx.lifecycle.Observer
 import com.google.android.gms.location.*
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.SphericalUtil
 import com.naemo.dismap.BR
 import com.naemo.dismap.R
 import com.naemo.dismap.databinding.ActivityMainBinding
+import com.naemo.dismap.db.Db
 import com.naemo.dismap.db.start.StartLocation
 import com.naemo.dismap.db.stop.StopLocation
 import com.naemo.dismap.ui.base.BaseActivity
 import com.naemo.dismap.utils.AppUtils
 import kotlinx.android.synthetic.main.activity_main.*
-import java.util.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.coroutines.CoroutineContext
 
-class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>(), MainNavigator {
+class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>(), MainNavigator, CoroutineScope {
+
+    override val coroutineContext: CoroutineContext
+        get() = Dispatchers.Main
 
     private val PERMISSION_ID = 1
 
@@ -48,7 +49,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>(), MainNav
     lateinit var mFusedLocationClient: FusedLocationProviderClient
     lateinit var button: Button
     lateinit var field: EditText
-    lateinit var progressBar: ProgressBar
+    var id: Int? = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,8 +59,9 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>(), MainNav
     private fun initViews() {
         button = mBinder?.buttonMain!!
         field = mBinder?.myDistance!!
-        progressBar = mBinder?.progress!!
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        val db = Db(1, 0.0, 0.0, 0.0, 0.0)
+        getViewModel()?.save(db)
     }
 
     private fun doBinding() {
@@ -93,7 +95,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>(), MainNav
     }
 
     private fun getStartLocation() {
-        progressBar.visibility = View.VISIBLE
+        getViewModel()?.textCalculating()
         if (checkPermissions()) {
             if (isLocationEnabled()) {
                 mFusedLocationClient.lastLocation.addOnCompleteListener(this) { task ->
@@ -104,7 +106,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>(), MainNav
                         mBinder?.buttonMain?.text = getString(R.string.stop)
                     } else {
                         Log.d("start", "location")
-                        saveToStartDb(location)
+                        id?.let { saveToStartDb(location, it) }
                         mBinder?.buttonMain?.text = getString(R.string.stop)
                     }
                 }
@@ -118,7 +120,6 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>(), MainNav
     }
 
     private fun getStopLocation() {
-        progressBar.visibility = View.GONE
         if (checkPermissions()) {
             if (isLocationEnabled()) {
                 mFusedLocationClient.lastLocation.addOnCompleteListener(this) { task ->
@@ -129,9 +130,10 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>(), MainNav
                         mBinder?.buttonMain?.text = getString(R.string.start)
                     } else {
                         Log.d("stop", "location")
-                        saveToStopDb(location)
+                        id?.let { saveToStopDb(location, it) }
                         mBinder?.buttonMain?.text = getString(R.string.start)
                     }
+                    Log.d("check", "check1")
                     getCoordinates()
                 }
             } else {
@@ -154,49 +156,54 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>(), MainNav
         mFusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper())
     }
 
-    private fun saveToStartDb(location: Location) {
+    private fun saveToStartDb(location: Location, id: Int) {
         Log.d("start", "save function")
         val longitude = location.longitude
+        Log.d("star7", longitude.toString())
         val latitude = location.latitude
-        val startLocation = StartLocation(longitude, latitude)
-        getViewModel()?.saveStart(startLocation)
+        Log.d("star8", latitude.toString())
+        getViewModel()?.updateStartLong(longitude, id)
+        getViewModel()?.updateStartLat(latitude, id)
     }
 
-    private fun saveToStopDb(location: Location) {
+    private fun saveToStopDb(location: Location, id: Int) {
         Log.d("stop", "save function")
         val longitude = location.longitude
+        Log.d("star5", longitude.toString())
         val latitude = location.latitude
-        val stopLocation = StopLocation(longitude, latitude)
-        getViewModel()?.saveStop(stopLocation)
+        getViewModel()?.updateStopLong(longitude, id)
+        Log.d("star6", latitude.toString())
+        getViewModel()?.updateStopLat(latitude, id)
+
     }
 
     private fun getCoordinates() {
-       val from =  getViewModel()?.retrieveStart()
-        from?.observe(this, Observer {
-            getLocation(it)
-        })
-    }
+        Log.d("check", "check2")
+        launch {
+            val db = getViewModel()?.getDb()
+            calcDistance(db)
+        }
 
-    private fun getLocation(startLocation: StartLocation) {
-        val to = getViewModel()?.retrieveStop()
-        to?.observe(this, Observer {stopLocation ->
-            calculateDistance(startLocation, stopLocation)
-        })
-    }
-
-    private fun calculateDistance(startLocation: StartLocation, stopLocation: StopLocation) {
-        val fromLat = startLocation.latitude
-        val fromLong = startLocation.longitude
-        val toLat = stopLocation.latitude
-        val toLong = stopLocation.longitude
-        val from = fromLat?.let { fromLong?.let { it1 -> LatLng(it, it1) } }
-        val to = toLat?.let { toLong?.let { it1 -> LatLng(it, it1) } }
-
-        val distance = SphericalUtil.computeDistanceBetween(from, to)
-        val meters = distance.toString()
-        getViewModel()?.textDistance(meters)
 
     }
+
+    private fun calcDistance(it: Db?) {
+        val startLatitude = it?.start_latitude
+        Log.d("star1", startLatitude.toString())
+        val startLongitude = it?.start_longitude
+        Log.d("star2", startLongitude.toString())
+        val stopLatitude = it?.stop_latitude
+        Log.d("star3", stopLatitude.toString())
+        val stopLongitude = it?.stop_longitude
+        Log.d("star4", stopLongitude.toString())
+
+        val startLocation = StartLocation(startLatitude, startLongitude)
+        val stopLocation = StopLocation(stopLatitude, stopLongitude)
+
+      getViewModel()?.calcDistance(startLocation, stopLocation)
+
+    }
+
 
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(p0: LocationResult?) {
@@ -205,11 +212,11 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>(), MainNav
             if (buttonText == "Start") {
                 Log.d("start", "no location call back")
                 location?.let {
-                    saveToStartDb(it)
+                    id?.let { it1 -> saveToStartDb(it, it1) }
                 }
             } else if (buttonText == "Stop") {
                 Log.d("stop", "no location call back")
-                location?.let { saveToStopDb(it) }
+                location?.let { id?.let { it1 -> saveToStopDb(it, it1) } }
             }
         }
     }
@@ -240,8 +247,9 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>(), MainNav
         if (requestCode == PERMISSION_ID) {
             if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
                 Log.d("start", "permissions")
-                fetchLocation()
+                //fetchLocation()
             }
         }
     }
+
 }

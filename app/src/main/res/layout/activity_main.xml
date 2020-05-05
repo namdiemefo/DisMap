@@ -38,13 +38,7 @@
             android:background="@color/colorHint"
             android:text="@={viewModel.distance}"
              />
-        
-        <ProgressBar
-            android:visibility="gone"
-            android:id="@+id/progress"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center" />
+
 
         <Button
             android:layout_marginTop="350dp"

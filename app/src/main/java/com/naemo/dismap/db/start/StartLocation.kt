@@ -4,27 +4,28 @@ import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.room.*
 
-@Entity(tableName = "Start_Location")
-class StartLocation(
-    val longitude: Double?,
-    val latitude: Double?
-) {
-    @PrimaryKey(autoGenerate = false)
-    var id = 0
-}
 
+data class StartLocation(
+    val start_latitude: Double?,
+    val start_longitude: Double?
+)
+
+/*
 @Dao
 interface StartLocationDao {
 
     @Query("SELECT * FROM Start_Location")
     fun loadStart(): LiveData<StartLocation>
 
+    @Query("SELECT * FROM Start_Location")
+    fun start(): StartLocation
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun saveStart(location: StartLocation)
 
 }
 
-@Database(entities = [StartLocation::class], version = 2, exportSchema = false)
+@Database(entities = [StartLocation::class], version = 3, exportSchema = false)
 abstract class StartLocationDatabase : RoomDatabase() {
 
     abstract fun startLocationDao(): StartLocationDao
@@ -50,3 +51,4 @@ abstract class StartLocationDatabase : RoomDatabase() {
     }
 
 }
+*/
